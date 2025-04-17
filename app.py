@@ -82,7 +82,7 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("app:app", host="0.0.0.0", port=port)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")
 
 ## 🔹 3️⃣ 학파별 어휘사전 (리스트 형식, 최신 class_mapping 반영)
 structured_vocab = {

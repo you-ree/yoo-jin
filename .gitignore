@@ -1,0 +1,11 @@
+uploads/
+models/
+*.keras
+*.whl
+*.webp
+*.jpg
+*.jpeg
+*.png
+*.exe
+__pycache__/
+.idea/

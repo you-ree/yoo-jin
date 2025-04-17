@@ -1,8 +1,10 @@
+import os
+import re
+import requests
+import zipfile
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-import os
-import re
 from PIL import Image
 import google.generativeai as genai
 from collections import defaultdict
@@ -11,6 +13,30 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
 
+# ✅ 모델 zip 다운로드 & 압축 해제
+ZIP_URL = "https://drive.google.com/uc?export=download&id=1fup5me_ftaDLjHKuyfSNqBAINPN7KABc"
+ZIP_PATH = "models/models_bundle.zip"
+EXTRACT_DIR = "models/"
+
+def download_and_extract_zip():
+    if not os.path.exists(EXTRACT_DIR):
+        os.makedirs(EXTRACT_DIR, exist_ok=True)
+
+    if not os.path.exists(ZIP_PATH):
+        print("📦 모델 ZIP 다운로드 중...")
+        response = requests.get(ZIP_URL)
+        with open(ZIP_PATH, "wb") as f:
+            f.write(response.content)
+        print("✅ 다운로드 완료")
+
+        print("🧩 압축 해제 중...")
+        with zipfile.ZipFile(ZIP_PATH, "r") as zip_ref:
+            zip_ref.extractall(EXTRACT_DIR)
+        print("✅ 압축 해제 완료")
+
+download_and_extract_zip()  # 이 줄이 실제로 zip을 다운로드하고 models 폴더에 풀어줌
+
+# ✅ 모델 불러오기
 school_labels = [
     '르네상스', '바로크', '로코코', '신고전주의', '낭만주의',
     '자연주의', '사실주의', '인상주의', '입체파&추상화'
@@ -24,13 +50,14 @@ for school in school_labels:
     if os.path.exists(path):
         binary_models[school] = load_model(path)
 
+# ✅ FastAPI 시작
 app = FastAPI()
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# 🔐 API Key 설정
+# 🔐 Gemini API 설정
 genai.configure(api_key="AIzaSyAGNPBS6pzxMbPUbHlSdfhX5rrthgDy9ko")
 okt = Okt()
 
@@ -936,3 +963,9 @@ def analyze_image(file: UploadFile = File(...)):
     </body>
     </html>
     """)
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)

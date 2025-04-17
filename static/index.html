@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미술사 분석</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        input, button { margin: 10px; padding: 10px; }
+        img { max-width: 400px; margin-top: 10px; }
+        #result { margin-top: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h2>이미지 업로드 후 미술사 분석</h2>
+    <input type="file" id="fileInput" accept="image/*">
+    <button onclick="uploadImage()">업로드 및 분석</button>
+    <div id="preview"></div>
+    <h3>분석 결과</h3>
+    <pre id="result">여기에 결과가 표시됩니다.</pre>
+
+    <script>
+        function uploadImage() {
+            let fileInput = document.getElementById("fileInput");
+            if (fileInput.files.length === 0) {
+                alert("이미지를 선택하세요!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            // 이미지 미리보기
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                let preview = document.getElementById("preview");
+                preview.innerHTML = `<img src="${event.target.result}" alt="업로드된 이미지">`;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+
+            // 서버로 파일 업로드 및 분석 요청
+            fetch("/upload/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+
+</body>
+</html>

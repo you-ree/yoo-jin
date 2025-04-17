@@ -81,6 +81,7 @@ async def root():
 # ✅ Render 포트 인식을 위한 uvicorn 실행
 if __name__ == "__main__":
     import uvicorn
+    import os
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("app:app", host="0.0.0.0", port=port, log_level="info")
 

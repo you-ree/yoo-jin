@@ -22,7 +22,7 @@ def download_and_extract_zip():
     if not os.path.exists(EXTRACT_DIR):
         os.makedirs(EXTRACT_DIR, exist_ok=True)
 
-    if not os.path.exists(ZIP_PATH):
+    if not os.path.exists("models/art_classification_model.keras"):
         print("📦 모델 ZIP 다운로드 중...")
         response = requests.get(ZIP_URL)
         with open(ZIP_PATH, "wb") as f:
@@ -34,9 +34,10 @@ def download_and_extract_zip():
             zip_ref.extractall(EXTRACT_DIR)
         print("✅ 압축 해제 완료")
 
-download_and_extract_zip()  # 이 줄이 실제로 zip을 다운로드하고 models 폴더에 풀어줌
+# 📥 다운로드 + 압축해제 먼저 실행
+download_and_extract_zip()
 
-# ✅ 모델 불러오기
+# ✅ 모델 로드
 school_labels = [
     '르네상스', '바로크', '로코코', '신고전주의', '낭만주의',
     '자연주의', '사실주의', '인상주의', '입체파&추상화'
@@ -50,7 +51,7 @@ for school in school_labels:
     if os.path.exists(path):
         binary_models[school] = load_model(path)
 
-# ✅ FastAPI 시작
+# ✅ FastAPI 앱 생성
 app = FastAPI()
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
@@ -60,6 +61,28 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # 🔐 Gemini API 설정
 genai.configure(api_key="AIzaSyAGNPBS6pzxMbPUbHlSdfhX5rrthgDy9ko")
 okt = Okt()
+
+# ✅ 간단한 라우트 예시
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return HTMLResponse("""
+    <html>
+    <head><title>AI 미술 분석</title></head>
+    <body>
+      <h2>🎨 AI 미술 분석 시스템에 오신 걸 환영합니다!</h2>
+      <form action="/upload" enctype="multipart/form-data" method="post">
+        <input name="file" type="file">
+        <input type="submit">
+      </form>
+    </body>
+    </html>
+    """)
+
+# ✅ Render 포트 인식을 위한 uvicorn 실행
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
 
 ## 🔹 3️⃣ 학파별 어휘사전 (리스트 형식, 최신 class_mapping 반영)
 structured_vocab = {
